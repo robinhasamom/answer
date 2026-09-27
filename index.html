@@ -96,14 +96,13 @@
         const container = document.getElementById('boardContainer');
         container.innerHTML = '<div class="no-data">Loading synchronized board matrix...</div>';
 
-        // Added X-Bin-Meta parameter to align seamlessly with user portal settings
-        fetch(`https://jsonbin.io{BIN_ID}/latest`, {
+        fetchactivation = fetch(`https://jsonbin.io{BIN_ID}/latest`, {
             headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
         })
         .then(res => res.json())
         .then(data => {
             container.innerHTML = '';
-            let database = data || {};
+            let database = data.record ? data.record : data;
             let codes = Object.keys(database).reverse();
 
             if (codes.length === 0) {
@@ -139,7 +138,7 @@
         })
         .then(res => res.json())
         .then(data => {
-            let remoteDB = data || {};
+            let remoteDB = data.record ? data.record : data;
             if (remoteDB[code]) {
                 remoteDB[code].answer = ansText;
                 remoteDB[code].status = "answered";
@@ -150,7 +149,11 @@
                 body: JSON.stringify(remoteDB)
             });
         })
-        .then(() => { alert(`Answer saved for ${code}!`); loadDashboard(); })
+        .then(res => {
+            if(!res.ok) throw new Error();
+            alert(`Answer saved for ${code}!`); 
+            loadDashboard(); 
+        })
         .catch(() => alert("Failed to save response sync update parameters."));
     }
 
@@ -162,7 +165,7 @@
         })
         .then(res => res.json())
         .then(data => {
-            let remoteDB = data || {};
+            let remoteDB = data.record ? data.record : data;
             delete remoteDB[code];
             return fetch(`https://jsonbin.io{BIN_ID}`, {
                 method: "PUT",
@@ -170,7 +173,10 @@
                 body: JSON.stringify(remoteDB)
             });
         })
-        .then(() => loadDashboard())
+        .then(res => {
+            if(!res.ok) throw new Error();
+            loadDashboard();
+        })
         .catch(() => alert("Deletion sync update failed."));
     }
 

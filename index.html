@@ -12,7 +12,7 @@
         }
         .wrapper { width: 100%; max-width: 600px; }
         h2 { font-size: 28px; font-weight: 600; margin-bottom: 20px; text-align: center; }
-        .top-bar { display: flex; justify-content: flex-end; width: 100%; max-width: 600px; margin-bottom: 20px; }
+        .top-bar { display: flex; justify-content: flex-end; width: 100%; max-width: 600px; margin-bottom: 20px; gap: 10px; }
         .card { background-color: #ffffff; padding: 24px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03); margin-bottom: 20px; }
         .code-badge { display: inline-block; background-color: #e8e8ed; padding: 4px 8px; border-radius: 6px; font-weight: 600; font-size: 13px; margin-bottom: 10px; }
         .question-text { font-size: 16px; margin-bottom: 15px; line-height: 1.4; }
@@ -22,13 +22,16 @@
         }
         textarea { resize: none; height: 70px; margin-bottom: 12px; }
         .action-row { display: flex; justify-content: space-between; gap: 10px; }
-        button { padding: 10px 18px; font-size: 14px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        button { padding: 10px 18px; font-size: 14px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, opacity 0.1s; }
+        button:active { opacity: 0.8; }
         .btn-save { background-color: #34c759; color: white; }
         .btn-save:hover { background-color: #28a745; }
         .btn-delete { background-color: #ff3b30; color: white; }
         .btn-delete:hover { background-color: #d7261b; }
         .btn-utility { background-color: #8e8e93; color: white; }
         .btn-utility:hover { background-color: #636366; }
+        .btn-refresh { background-color: #0071e3; color: white; }
+        .btn-refresh:hover { background-color: #0077ed; }
         .btn-primary { background-color: #0071e3; color: white; padding: 12px 20px; width: 100%; font-size: 16px; border-radius: 10px; }
         .no-data { text-align: center; color: #8e8e93; font-size: 16px; margin-top: 40px; }
         .hidden { display: none !important; }
@@ -46,6 +49,8 @@
 
 <div id="protectedDashboard" class="wrapper hidden">
     <div class="top-bar">
+        <!-- New Refresh Feed Button placed next to change password -->
+        <button class="btn-refresh" onclick="loadDashboard()">Refresh Feed 🔄</button>
         <button class="btn-utility" onclick="changeAdminPassword()">Change Password</button>
     </div>
     <h2>Question Board Dashboard</h2>
@@ -53,8 +58,8 @@
 </div>
 
 <script>
-    const BIN_ID = "66f5bec5e41b4d34e4370db3";
-    const API_KEY = "\$2a\$10\$WqBshm97mCidpXUbeE766.S7.bC0Vp.D2w6qQ/O3W6VbI/n7fIu1q";
+    const BIN_ID = "66f6345fe41b4d34e4373eb4";
+    const API_KEY = "\$2a\$10\$uMtIlsOcR9egMfn267bBIu2tmUPQ4TLVj856cEbkIToKzPk0VAvcO";
     const DEFAULT_PASS = "1234567";
 
     function attemptLogin() {
@@ -80,7 +85,6 @@
         if (newPass === null) return;
         if (newPass.trim() === "") { alert("Password cannot be empty."); return; }
 
-        // Completely restriction-free variable allocation password updating block
         localStorage.setItem('admin_dashboard_pass', newPass.trim());
         alert("Password updated! Please log back in.");
         
@@ -123,7 +127,7 @@
                 container.appendChild(card);
             });
         })
-        .catch(() => container.innerHTML = '<div class="no-data">Error downloading live feeds.</div>');
+        .catch(() => container.innerHTML = '<div class="no-data" style="color: #ff3b30;">Error downloading live feeds. Check connection.</div>');
     }
 
     function saveAnswer(code) {

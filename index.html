@@ -46,8 +46,7 @@
     <div id="boardContainer"></div>
 </div>
 <script>
-    const BIN_ID = "6ab8a0edac6210605af9cf59";
-    const API_KEY = "\$2a\$10\$uMtIlsOcR9egMfn267bBIu2tmUPQ4TLVj856cEbkIToKzPk0VAvcO";
+    const STORAGE_KEY = "robin_qa_global_store_2026";
     const DEFAULT_PASS = "1234567";
 
     function attemptLogin() {
@@ -74,19 +73,13 @@
 
     function loadDashboard() {
         const container = document.getElementById('boardContainer');
-        container.innerHTML = '<div class="no-data">Loading synchronized board matrix...</div>';
+        container.innerHTML = '<div class="no-data">Loading synchronized board entries...</div>';
 
-        fetch(`https://jsonbin.io{BIN_ID}/latest`, {
-            headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
-        })
-        .then(res => res.json())
-        .then(data => {
+        fetch(`https://kvstore.io{STORAGE_KEY}`)
+        .then(res => res.status === 404 ? {} : res.json())
+        .then(database => {
             container.innerHTML = '';
-            let database = data && data.record ? data.record : data;
-            if (typeof database !== 'object' || Array.isArray(database) || database === null) { database = {}; }
-            
-            // Filter out the placeholder initialization key cleanly
-            let codes = Object.keys(database).filter(c => c !== "init").reverse();
+            let codes = Object.keys(database).reverse();
 
             if (codes.length === 0) {
                 container.innerHTML = '<div class="no-data">No questions submitted yet.</div>';
@@ -116,39 +109,34 @@
         const ansText = document.getElementById(`ans-${code}`).value.trim();
         if (!ansText) { alert("Please type an answer."); return; }
 
-        fetch(`https://jsonbin.io{BIN_ID}/latest`, {
-            headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
-        })
+        fetch(`https://kvstore.io{STORAGE_KEY}`)
         .then(res => res.json())
-        .then(data => {
-            let remoteDB = data && data.record ? data.record : data;
-            if (remoteDB[code]) { remoteDB[code].answer = ansText; remoteDB[code].status = "answered"; }
-            return fetch(`https://jsonbin.io{BIN_ID}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-                body: JSON.stringify(remoteDB)
+        .then(database => {
+            if (database[code]) { database[code].answer = ansText; database[code].status = "answered"; }
+            return fetch(`https://kvstore.io{STORAGE_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(database)
             });
         })
-        .then(res => { if(!res.ok) throw new Error(); alert(`Answer saved for ${code}!`); loadDashboard(); })
+        .then(() => { alert(`Answer saved for ${code}!`); loadDashboard(); })
         .catch(() => alert("Failed to save."));
     }
 
     function deleteQuestion(code) {
         if (!confirm(`Delete question ${code}?`)) return;
-        fetch(`https://jsonbin.io{BIN_ID}/latest`, {
-            headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
-        })
+        fetch(`https://jsonbin.io{BIN_ID}/latest`)
+        fetch(`https://kvstore.io{STORAGE_KEY}`)
         .then(res => res.json())
-        .then(data => {
-            let remoteDB = data && data.record ? data.record : data;
-            delete remoteDB[code];
-            return fetch(`https://jsonbin.io{BIN_ID}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json", "X-Master-Key": API_KEY },
-                body: JSON.stringify(remoteDB)
+        .then(database => {
+            delete database[code];
+            return fetch(`https://kvstore.io{STORAGE_KEY}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(database)
             });
         })
-        .then(res => { if(!res.ok) throw new Error(); loadDashboard(); })
+        .then(() => loadDashboard())
         .catch(() => alert("Deletion failed."));
     }
 

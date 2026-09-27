@@ -49,7 +49,6 @@
 
 <div id="protectedDashboard" class="wrapper hidden">
     <div class="top-bar">
-        <!-- New Refresh Feed Button placed next to change password -->
         <button class="btn-refresh" onclick="loadDashboard()">Refresh Feed 🔄</button>
         <button class="btn-utility" onclick="changeAdminPassword()">Change Password</button>
     </div>
@@ -97,13 +96,14 @@
         const container = document.getElementById('boardContainer');
         container.innerHTML = '<div class="no-data">Loading synchronized board matrix...</div>';
 
+        // Added X-Bin-Meta parameter to align seamlessly with user portal settings
         fetch(`https://jsonbin.io{BIN_ID}/latest`, {
-            headers: { "X-Master-Key": API_KEY }
+            headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
         })
         .then(res => res.json())
         .then(data => {
             container.innerHTML = '';
-            let database = data.record || {};
+            let database = data || {};
             let codes = Object.keys(database).reverse();
 
             if (codes.length === 0) {
@@ -135,11 +135,11 @@
         if (!ansText) { alert("Please type an answer."); return; }
 
         fetch(`https://jsonbin.io{BIN_ID}/latest`, {
-            headers: { "X-Master-Key": API_KEY }
+            headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
         })
         .then(res => res.json())
         .then(data => {
-            let remoteDB = data.record || {};
+            let remoteDB = data || {};
             if (remoteDB[code]) {
                 remoteDB[code].answer = ansText;
                 remoteDB[code].status = "answered";
@@ -158,11 +158,11 @@
         if (!confirm(`Delete question ${code}?`)) return;
 
         fetch(`https://jsonbin.io{BIN_ID}/latest`, {
-            headers: { "X-Master-Key": API_KEY }
+            headers: { "X-Master-Key": API_KEY, "X-Bin-Meta": "false" }
         })
         .then(res => res.json())
         .then(data => {
-            let remoteDB = data.record || {};
+            let remoteDB = data || {};
             delete remoteDB[code];
             return fetch(`https://jsonbin.io{BIN_ID}`, {
                 method: "PUT",

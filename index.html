@@ -46,7 +46,7 @@
     <div id="boardContainer"></div>
 </div>
 <script>
-    const STORAGE_KEY = "robin_qa_global_store_2026";
+    const CHANNEL_KEY = "robin_qa_centralized_hub_network_v2026";
     const DEFAULT_PASS = "1234567";
 
     function attemptLogin() {
@@ -75,10 +75,13 @@
         const container = document.getElementById('boardContainer');
         container.innerHTML = '<div class="no-data">Loading synchronized board entries...</div>';
 
-        fetch(`https://kvstore.io{STORAGE_KEY}`)
-        .then(res => res.status === 404 ? {} : res.json())
-        .then(database => {
+        fetch(`https://keyvalue.xyz{CHANNEL_KEY}/db`)
+        .then(res => res.status === 404 ? "{}" : res.text())
+        .then(text => {
             container.innerHTML = '';
+            let database = {};
+            try { database = JSON.parse(text); } catch(e) {}
+            if (typeof database !== 'object' || database === null) { database = {}; }
             let codes = Object.keys(database).reverse();
 
             if (codes.length === 0) {
@@ -109,13 +112,15 @@
         const ansText = document.getElementById(`ans-${code}`).value.trim();
         if (!ansText) { alert("Please type an answer."); return; }
 
-        fetch(`https://kvstore.io{STORAGE_KEY}`)
-        .then(res => res.json())
-        .then(database => {
+        fetch(`https://keyvalue.xyz{CHANNEL_KEY}/db`)
+        .then(res => res.text())
+        .then(text => {
+            let database = {};
+            try { database = JSON.parse(text); } catch(e) {}
             if (database[code]) { database[code].answer = ansText; database[code].status = "answered"; }
-            return fetch(`https://kvstore.io{STORAGE_KEY}`, {
+            
+            return fetch(`https://keyvalue.xyz{CHANNEL_KEY}/db`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(database)
             });
         })
@@ -125,14 +130,15 @@
 
     function deleteQuestion(code) {
         if (!confirm(`Delete question ${code}?`)) return;
-        fetch(`https://jsonbin.io{BIN_ID}/latest`)
-        fetch(`https://kvstore.io{STORAGE_KEY}`)
-        .then(res => res.json())
-        .then(database => {
+        fetch(`https://keyvalue.xyz{CHANNEL_KEY}/db`)
+        .then(res => res.text())
+        .then(text => {
+            let database = {};
+            try { database = JSON.parse(text); } catch(e) {}
             delete database[code];
-            return fetch(`https://kvstore.io{STORAGE_KEY}`, {
+            
+            return fetch(`https://keyvalue.xyz{CHANNEL_KEY}/db`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(database)
             });
         })

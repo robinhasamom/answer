@@ -46,8 +46,7 @@
     <div id="boardContainer"></div>
 </div>
 <script>
-    // Changed to a uniquely encrypted string so no other computers mix with your dashboard data
-    const CHANNEL_KEY = "robin_private_qa_vault_948271501_v2026";
+    const CHANNEL_KEY = "robin_secure_qa_hub_v994821";
     const PROXY_URL = "https://corsproxy.io?";
     const TARGET_URL = `https://keyvalue.xyz{CHANNEL_KEY}/db`;
     const DEFAULT_PASS = "1234567";
@@ -79,12 +78,14 @@
         container.innerHTML = '<div class="no-data">Loading synchronized board entries...</div>';
 
         fetch(PROXY_URL + encodeURIComponent(TARGET_URL))
-        .then(res => res.status === 404 ? "{}" : res.text())
+        .then(res => res.status === 404 || res.status === 500 ? "{}" : res.text())
         .then(text => {
             container.innerHTML = '';
             let database = {};
-            try { database = JSON.parse(text); } catch(e) {}
-            if (typeof database !== 'object' || database === null) { database = {}; }
+            if (text && text.trim() && !text.includes("Cannot GET") && !text.includes("Error")) {
+                try { database = JSON.parse(text); } catch(e) {}
+            }
+            if (typeof database !== 'object' || database === null || Array.isArray(database)) { database = {}; }
             let codes = Object.keys(database).reverse();
 
             if (codes.length === 0) {
@@ -94,7 +95,6 @@
 
             codes.forEach(code => {
                 const item = database[code];
-                // Added checks to prevent other people's broken template structural parameters from polluting your rendering stream
                 if (item && item.question) {
                     const card = document.createElement('div');
                     card.className = 'card';
@@ -111,7 +111,6 @@
                 }
             });
 
-            // If layout filters trimmed out external broken data and box remains empty
             if (container.innerHTML === '') {
                 container.innerHTML = '<div class="no-data">No questions submitted yet.</div>';
             }

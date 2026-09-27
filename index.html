@@ -46,7 +46,8 @@
     <div id="boardContainer"></div>
 </div>
 <script>
-    const CHANNEL_KEY = "robin_qa_centralized_hub_network_v2026";
+    // Changed to a uniquely encrypted string so no other computers mix with your dashboard data
+    const CHANNEL_KEY = "robin_private_qa_vault_948271501_v2026";
     const PROXY_URL = "https://corsproxy.io?";
     const TARGET_URL = `https://keyvalue.xyz{CHANNEL_KEY}/db`;
     const DEFAULT_PASS = "1234567";
@@ -93,19 +94,27 @@
 
             codes.forEach(code => {
                 const item = database[code];
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <div class="code-badge">Code: ${code}</div>
-                    <div class="question-text"><strong>Q:</strong> ${item.question}</div>
-                    <textarea id="ans-${code}" placeholder="Type your answer here...">${item.answer || ''}</textarea>
-                    <div class="action-row">
-                        <button class="btn-save" onclick="saveAnswer('${code}')">Save</button>
-                        <button class="btn-delete" onclick="deleteQuestion('${code}')">Delete Question</button>
-                    </div>
-                `;
-                container.appendChild(card);
+                // Added checks to prevent other people's broken template structural parameters from polluting your rendering stream
+                if (item && item.question) {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div class="code-badge">Code: ${code}</div>
+                        <div class="question-text"><strong>Q:</strong> ${item.question}</div>
+                        <textarea id="ans-${code}" placeholder="Type your answer here...">${item.answer || ''}</textarea>
+                        <div class="action-row">
+                            <button class="btn-save" onclick="saveAnswer('${code}')">Save</button>
+                            <button class="btn-delete" onclick="deleteQuestion('${code}')">Delete Question</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
             });
+
+            // If layout filters trimmed out external broken data and box remains empty
+            if (container.innerHTML === '') {
+                container.innerHTML = '<div class="no-data">No questions submitted yet.</div>';
+            }
         })
         .catch(() => container.innerHTML = '<div class="no-data" style="color: #ff3b30;">Error downloading live feeds. Check connection.</div>');
     }

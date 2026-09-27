@@ -15,7 +15,8 @@
         textarea, input[type="password"] { width: 100%; padding: 10px; border: 1px solid #d2d2d7; border-radius: 8px; font-size: 15px; box-sizing: border-box; outline: none; font-family: inherit; }
         textarea { resize: none; height: 70px; margin-bottom: 12px; }
         .action-row { display: flex; justify-content: space-between; gap: 10px; }
-        button { padding: 10px 18px; font-size: 14px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        button { padding: 10px 18px; font-size: 14px; font-weight: 500; border: none; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, opacity 0.1s; }
+        button:active { opacity: 0.8; }
         .btn-save { background-color: #34c759; color: white; }
         .btn-save:hover { background-color: #28a745; }
         .btn-delete { background-color: #ff3b30; color: white; }
@@ -46,9 +47,8 @@
     <div id="boardContainer"></div>
 </div>
 <script>
-    const CHANNEL_KEY = "robin_secure_qa_hub_v994821";
-    const PROXY_URL = "https://corsproxy.io?";
-    const TARGET_URL = `https://keyvalue.xyz{CHANNEL_KEY}/db`;
+    const STORAGE_KEY = "robin_qa_storage_room_final_v1";
+    const API_URL = `https://kv.rest{STORAGE_KEY}`;
     const DEFAULT_PASS = "1234567";
 
     function attemptLogin() {
@@ -77,14 +77,12 @@
         const container = document.getElementById('boardContainer');
         container.innerHTML = '<div class="no-data">Loading synchronized board entries...</div>';
 
-        fetch(PROXY_URL + encodeURIComponent(TARGET_URL))
-        .then(res => res.status === 404 || res.status === 500 ? "{}" : res.text())
+        fetch(API_URL)
+        .then(res => res.status === 404 || res.status === 204 ? "{}" : res.text())
         .then(text => {
             container.innerHTML = '';
             let database = {};
-            if (text && text.trim() && !text.includes("Cannot GET") && !text.includes("Error")) {
-                try { database = JSON.parse(text); } catch(e) {}
-            }
+            if (text && text.trim()) { try { database = JSON.parse(text); } catch(e) {} }
             if (typeof database !== 'object' || database === null || Array.isArray(database)) { database = {}; }
             let codes = Object.keys(database).reverse();
 
@@ -122,15 +120,16 @@
         const ansText = document.getElementById(`ans-${code}`).value.trim();
         if (!ansText) { alert("Please type an answer."); return; }
 
-        fetch(PROXY_URL + encodeURIComponent(TARGET_URL))
+        fetch(API_URL)
         .then(res => res.text())
         .then(text => {
             let database = {};
             try { database = JSON.parse(text); } catch(e) {}
             if (database[code]) { database[code].answer = ansText; database[code].status = "answered"; }
             
-            return fetch(PROXY_URL + encodeURIComponent(TARGET_URL), {
-                method: "POST",
+            return fetch(API_URL, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(database)
             });
         })
@@ -140,15 +139,16 @@
 
     function deleteQuestion(code) {
         if (!confirm(`Delete question ${code}?`)) return;
-        fetch(PROXY_URL + encodeURIComponent(TARGET_URL))
+        fetch(API_URL)
         .then(res => res.text())
         .then(text => {
             let database = {};
             try { database = JSON.parse(text); } catch(e) {}
             delete database[code];
             
-            return fetch(PROXY_URL + encodeURIComponent(TARGET_URL), {
-                method: "POST",
+            return fetch(API_URL, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(database)
             });
         })
